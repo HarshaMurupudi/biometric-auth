@@ -5,19 +5,29 @@
   "main": "server.js",
   "scripts": {
     "start": "node server",
-    "server": "nodemon server"
+    "server": "nodemon server",
+    "client": "npm start --prefix client",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix client && npm run build --prefix client"
   },
   "author": "harsha",
   "license": "MIT",
   "dependencies": {
+    "@lapo/asn1js": "^1.2.3",
+    "base64url": "^3.0.1",
     "bcryptjs": "^2.4.3",
+    "cbor": "^8.0.2",
     "config": "^3.3.6",
+    "cose": "git+https://github.com/herrjemand/cose.git",
+    "crypto": "^1.0.1",
     "express": "^4.17.1",
     "express-validator": "^6.13.0",
     "gravatar": "^1.8.2",
     "jsonwebtoken": "^8.5.1",
+    "jsrsasign": "^10.4.1",
     "mongoose": "^6.0.12",
-    "request": "^2.88.2"
+    "request": "^2.88.2",
+    "vanillacbor": "git+https://github.com/herrjemand/vanillacbor.git"
   },
   "devDependencies": {
     "concurrently": "^6.3.0",
