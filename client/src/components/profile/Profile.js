@@ -21,7 +21,7 @@ const Profile = ({ webauthRegister, updateUser, auth, profile, history }) => {
 
 
   return (
-    <div>
+    <div className="profile">
       <h1>
         Profile
       </h1>
