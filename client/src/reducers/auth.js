@@ -1,5 +1,9 @@
 import {
-  REGISTER_SUCCESS, REGISTER_FAIL, USER_LOADED, AUTH_ERROR,
+  REGISTER_SUCCESS,
+  REGISTER_FAIL,
+  USER_LOADING,
+  USER_LOADED,
+  AUTH_ERROR,
   LOGIN_SUCCESS,
   LOGIN_FAIL,
   LOGOUT
@@ -16,6 +20,11 @@ const initalState = {
 export default function (state = initalState, action) {
   const { type, payload } = action;
   switch (type) {
+    case USER_LOADING:
+      return {
+        ...state,
+        ...payload
+      }
     case USER_LOADED:
       return {
         ...state,

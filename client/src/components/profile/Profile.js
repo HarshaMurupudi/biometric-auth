@@ -25,13 +25,17 @@ const Profile = ({ webauthRegister, updateUser, auth, profile, history }) => {
       <h1>
         Profile
       </h1>
-      <div className="my-3">
-        {auth.user ? <h2>Welcome {auth.user.name}</h2> : <h2>Loading..</h2>}
-        <label>
-          <h6>Biometric Authentication</h6>
-          <Switch onChange={onChange} checked={auth.user ? auth.user.bioauth : false} />
-        </label>
-      </div>
+      {
+        auth.loading ? <div>Loading...</div> : (
+          <div className="my-3">
+            <h2>Welcome <i>{auth.user.name}</i></h2>
+            <label>
+              <h6>Biometric Authentication</h6>
+              <Switch onChange={onChange} checked={auth.user ? auth.user.bioauth : false} />
+            </label>
+          </div>
+        )
+      }
     </div>
   )
 }

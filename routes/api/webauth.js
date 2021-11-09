@@ -41,7 +41,6 @@ router.post('/register/response', auth, async (request, response) => {
 
     let webauthnResp = request.body
 
-
     let result;
     if (webauthnResp.response.attestationObject !== undefined) {
       result = verifyAuthenticatorAttestationResponse(webauthnResp);
@@ -129,12 +128,9 @@ router.post('/login/response', async (request, response) => {
     let result;
     if (webauthnResp.response.authenticatorData !== undefined) {
       const { userId } = webauthnResp;
-      console.log(userId)
       const user = await User.findById(userId)
       /* This is get assertion */
       result = verifyAuthenticatorAssertionResponse(webauthnResp, user.authenticators);
-
-      console.log(result)
 
       if (result.verified) {
         console.log("login verfied")

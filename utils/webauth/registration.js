@@ -79,9 +79,7 @@ let verifyAuthenticatorAttestationResponse = (webAuthnResponse) => {
       fmt: 'fido-u2f',
       cosePublicKey: base64url.encode(authDataStruct.cosePublicKeyBuffer),
       counter: authDataStruct.counter,
-      // credId: base64url.encode(authDataStruct.credIdBuffer)
       credId: base64url.encode(rawId)
-      // credId: binToStr(rawId)
     }
   }
 

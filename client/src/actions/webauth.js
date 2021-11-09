@@ -9,11 +9,13 @@ import {
 
 import {
   USER_LOADED,
+  USER_LOADING,
   LOGIN_SUCCESS,
   AUTH_ERROR
 } from './types';
 
 import { loadUser } from './auth';
+import { setAlert } from './alert'
 
 // another function to go from string to ByteArray, but we first encode the
 // string as base64 - note the use of the atob() function
@@ -103,6 +105,10 @@ export const webauthRegister = (userId) => async dispatch => {
     }
     localStorage.setItem('bioauthConfig', JSON.stringify(locallyStoredBioauthConfig));
 
+    dispatch({
+      type: USER_LOADING,
+      payload: { loading: true }
+    });
     // Register the credential to the server endpoint
     let makeCredResponse = publicKeyCredentialToJSON(cred);
     const res = await sendWebAuthnResponse(makeCredResponse, 'register');
@@ -112,10 +118,11 @@ export const webauthRegister = (userId) => async dispatch => {
       payload: res.data
     });
     dispatch(loadUser())
-
   } catch (error) {
+    dispatch(setAlert("Biometric authentication failed", 'danger'))
     dispatch({
-      type: AUTH_ERROR
+      type: USER_LOADING,
+      payload: { loading: false }
     });
   }
 }
@@ -123,10 +130,8 @@ export const webauthRegister = (userId) => async dispatch => {
 export const webauthLogin = ({ userId }) => async dispatch => {
   try {
     const response = await getGetAssertionChallenge(userId);
-    // alert(response)
-    let publicKey = preformatGetAssertReq(response);
+    // let publicKey = preformatGetAssertReq(response);
     const { rawId } = JSON.parse(localStorage.getItem('bioauthConfig'));
-    // alert(rawId)
     const testPubKey = {
       challenge: Buffer.from(base64url.decode(response.challenge), 'base64'),
       allowCredentials: [{

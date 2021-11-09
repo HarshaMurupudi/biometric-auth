@@ -38,22 +38,14 @@ let verifyAuthenticatorAssertionResponse = (webAuthnResponse, authenticators) =>
   let authDataStruct = parseAuthData(authDataBuffer);
   let signatureBuffer = base64url.toBuffer(webAuthnResponse.response.signature);
   let signatureBaseBuffer = Buffer.concat([authDataBuffer, clientDataHash]);
-
   let response = { 'verified': false };
+
   if (!authDataStruct.flags.up) {
     console.log('User was NOT presented durring authentication!');
     return response
   }
 
   response.verified = cose.verifySignature(signatureBuffer, signatureBaseBuffer, pubKeyBuffer)
-
-  if (response.verified) {
-    console.log(response);
-    // if (authDataStruct.counter <= authr.counter)
-    //   throw new Error('Authr counter did not increase!');
-
-    // authr.counter = authDataStruct.counter
-  }
 
   return response
 }
