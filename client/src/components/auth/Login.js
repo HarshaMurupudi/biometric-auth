@@ -28,9 +28,9 @@ const Login = ({ login, webauthLogin, isAuthenticated }) => {
   }
 
   const isBioauthEnabled = () => {
-    const { userId } = JSON.parse(localStorage.getItem('bioauthConfig'));
+    const bioauthConfig = JSON.parse(localStorage.getItem('bioauthConfig'));
 
-    if (userId) {
+    if (bioauthConfig) {
       return true;
     } else {
       return false;
@@ -66,8 +66,11 @@ const Login = ({ login, webauthLogin, isAuthenticated }) => {
         <input type="submit" className="btn btn-primary" value="Login" />
       </form>
 
-      <h4>or</h4>
-      {isBioauthEnabled && <input type="submit" className="btn btn-primary" value="Biometric Login" onClick={e => onBiometricLoginClick(e)} />}
+      {isBioauthEnabled() && <div>
+        <h4>or</h4>
+        <input type="submit" className="btn btn-primary" value="Biometric Login" onClick={e => onBiometricLoginClick(e)} />
+      </div>
+      }
 
       <p className="my-1">
         Don't have an account? <Link to="/register">Register</Link>
