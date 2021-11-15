@@ -137,7 +137,6 @@ var validateCertificatePath = (certificates) => {
 }
 
 let verifyAppleAnonymousAttestation = (webAuthnResponse) => {
-  console.log(webAuthnResponse, "apple")
   let attestationBuffer = base64url.toBuffer(webAuthnResponse.response.attestationObject);
   let attestationStruct = cbor.decodeAllSync(attestationBuffer)[0];
 

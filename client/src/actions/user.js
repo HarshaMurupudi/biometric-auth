@@ -7,7 +7,6 @@ import {
 import { loadUser } from './auth';
 
 export const updateUser = (formData, history) => async dispatch => {
-  console.log("Update user reached")
   try {
     const config = {
       headers: {

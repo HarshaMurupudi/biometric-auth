@@ -28,7 +28,6 @@ const fetchUser = async (url) => {
 
 const App = () => {
   useEffect(() => {
-    console.log('user loaded')
     fetchUser()
   }, [])
 

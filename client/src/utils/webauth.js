@@ -1,9 +1,5 @@
 const base64url = require('base64url');
 
-function strToBin(str) {
-  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
-}
-
 /**
  * Converts PublicKeyCredential into serialised JSON
  * @param  {Object} pubKeyCred
@@ -53,8 +49,8 @@ export var generateRandomBuffer = (len) => {
  * Decodes arrayBuffer required fields.
  */
 export var preformatMakeCredReq = (makeCredReq) => {
-  makeCredReq.challenge = Buffer.from(base64url.decode(makeCredReq.challenge), 'base64');
-  makeCredReq.user.id = Buffer.from(base64url.decode(makeCredReq.user.id), 'base64');
+  makeCredReq.challenge = base64url.toBuffer(makeCredReq.challenge);
+  makeCredReq.user.id = Buffer.from(base64url.decode(makeCredReq.user.id));
 
   return makeCredReq
 }
@@ -67,14 +63,24 @@ export var preformatGetAssertReq = (getAssert) => {
   const rawId = localStorage.getItem('rawId');
 
   for (let allowCred of getAssert.allowCredentials) {
-    // console.log(typeof base64url.decode(allowCred.id))
     // const cred = strToBin(base64url.decode(allowCred.id))
-    // const cred = strToBin(base64url.decode(allowCred.id))
-    // alert(cred)
-
     // allowCred.id = Buffer.from(base64url.decode(allowCred.id), 'base64');
     allowCred.id = strToBin(rawId);
   }
 
   return getAssert
 }
+
+// another function to go from string to ByteArray, but we first encode the
+// string as base64 - note the use of the atob() function
+export var strToBin = (str) => {
+  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+}
+
+// function to encode raw binary to string, which is subsequently
+// encoded to base64 - note the use of the btoa() function
+export var binToStr = (bin) => {
+  return btoa(new Uint8Array(bin).reduce(
+    (s, byte) => s + String.fromCharCode(byte), ''
+  ));
+};

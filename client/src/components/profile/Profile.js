@@ -9,8 +9,6 @@ import { updateUser } from '../../actions/user';
 
 const Profile = ({ webauthRegister, updateUser, auth, profile, history }) => {
   const onChange = async e => {
-    console.log("hit on change");
-
     if (auth.user.bioauth) {
       await updateUser({ bioauth: !auth.user.bioauth }, history);
       localStorage.removeItem("bioauthConfig");

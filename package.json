@@ -18,6 +18,8 @@
     "bcryptjs": "^2.4.3",
     "cbor": "^8.0.2",
     "config": "^3.3.6",
+    "cookie-parser": "^1.4.5",
+    "cookie-session": "^1.4.0",
     "cose": "git+https://github.com/herrjemand/cose.git",
     "crypto": "^1.0.1",
     "express": "^4.17.1",

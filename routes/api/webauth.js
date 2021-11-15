@@ -23,6 +23,9 @@ router.post('/register', auth, async (request, response) => {
   let challengeMakeCred = generateServerMakeCredRequest(user.email, user.name, user.id)
   challengeMakeCred.status = 'ok'
 
+  request.session.challenge = challengeMakeCred.challenge;
+  request.session.username = user.email;
+
   response.json(challengeMakeCred)
 })
 
@@ -31,15 +34,26 @@ router.post('/register/response', auth, async (request, response) => {
     if (!request.body || !request.body.id
       || !request.body.rawId || !request.body.response
       || !request.body.type || request.body.type !== 'public-key') {
-      response.json({
-        'status': 'failed',
-        'message': 'Response missing one or more of id/rawId/response/type fields, or type is not public-key!'
-      })
+      response
+        .json({
+          'status': 'failed',
+          'message': 'Response missing one or more of id/rawId/response/type fields, or type is not public-key!'
+        })
 
       return
     }
 
-    let webauthnResp = request.body
+    let webauthnResp = request.body;
+    let clientData = JSON.parse(base64url.decode(webauthnResp.response.clientDataJSON));
+
+    /* Check challenge... */
+    if (clientData.challenge !== request.session.challenge) {
+      return response
+        .status(400)
+        .json({
+          errors: [{ msg: 'Challenges don\'t match!' }]
+        })
+    }
 
     let result;
     if (webauthnResp.response.attestationObject !== undefined) {
@@ -52,29 +66,26 @@ router.post('/register/response', auth, async (request, response) => {
         userFields.authenticators.push(result.authrInfo);
         userFields.bioauth = true;
 
-        console.log(request.user.id)
-
         const user = await User.findOneAndUpdate(
           { _id: request.user.id },
           { $set: userFields },
           { new: true },
         );
-        console.log(user)
         response.json(user)
 
       } else {
-        response
+        return response
           .status(400)
           .json({ errors: [{ msg: 'Invalid Credentials' }] });
       }
     } else {
-      response.json({
+      return response.json({
         'status': 'failed',
         'message': 'Can not determine type of response!'
       })
     }
   } catch (error) {
-    console.log(err)
+    console.log(error)
     response.status(500).send('Server error');
   }
 });
@@ -83,8 +94,8 @@ router.post('/login', async (request, response) => {
   const user = await User.findById(request.body.id)
   let getAssertion = generateServerGetAssertion(user.authenticators)
   getAssertion.status = 'ok'
-  // request.session.challenge = getAssertion.challenge;
-  // request.session.username = username;
+  request.session.challenge = getAssertion.challenge;
+  request.session.username = user.email;
 
   response.json(getAssertion)
 });
@@ -105,15 +116,15 @@ router.post('/login/response', async (request, response) => {
 
     let webauthnResp = request.body
     let clientData = JSON.parse(base64url.decode(webauthnResp.response.clientDataJSON));
-    console.log(webauthnResp.userId, "fetching response")
 
     /* Check challenge... */
-    // if (clientData.challenge !== request.session.challenge) {
-    //   response.json({
-    //     'status': 'failed',
-    //     'message': 'Challenges don\'t match!'
-    //   })
-    // }
+    if (clientData.challenge !== request.session.challenge) {
+      return response
+        .status(400)
+        .json({
+          errors: [{ msg: 'Challenges don\'t match!' }]
+        })
+    }
 
     /* ...and origin */
     // if (clientData.origin !== config.origin) {
@@ -123,8 +134,6 @@ router.post('/login/response', async (request, response) => {
     //   })
     // }
 
-    // const user = await User.findById(req.user.id)
-
     let result;
     if (webauthnResp.response.authenticatorData !== undefined) {
       const { userId } = webauthnResp;
@@ -133,7 +142,6 @@ router.post('/login/response', async (request, response) => {
       result = verifyAuthenticatorAssertionResponse(webauthnResp, user.authenticators);
 
       if (result.verified) {
-        console.log("login verfied")
         const payload = {
           user: {
             id: userId
@@ -157,19 +165,11 @@ router.post('/login/response', async (request, response) => {
           .json({ errors: [{ msg: 'Invalid Credentials' }] });
       }
     } else {
-      response.json({
-        'status': 'failed',
-        'message': 'Can not determine type of response!'
-      })
-    }
-
-    if (result.verified) {
-      // request.session.loggedIn = true;
-      response.json({ 'status': 'ok' })
-    } else {
-      response
+      return response
         .status(400)
-        .json({ errors: [{ msg: 'Invalid Credentials' }] });
+        .json({
+          errors: [{ msg: 'Can not determine type of response!' }]
+        })
     }
   } catch (err) {
     console.log(err)

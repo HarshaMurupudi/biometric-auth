@@ -4,7 +4,9 @@ import base64url from 'base64url';
 import {
   preformatMakeCredReq,
   publicKeyCredentialToJSON,
-  preformatGetAssertReq
+  preformatGetAssertReq,
+  strToBin,
+  binToStr
 } from '../utils/webauth';
 
 import {
@@ -17,36 +19,19 @@ import {
 import { loadUser } from './auth';
 import { setAlert } from './alert'
 
-// another function to go from string to ByteArray, but we first encode the
-// string as base64 - note the use of the atob() function
-function strToBin(str) {
-  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
-}
-
-// function to encode raw binary to string, which is subsequently
-// encoded to base64 - note the use of the btoa() function
-function binToStr(bin) {
-  return btoa(new Uint8Array(bin).reduce(
-    (s, byte) => s + String.fromCharCode(byte), ''
-  ));
-};
-
 let getMakeCredentialsChallenge = async () => {
   const config = {
     headers: {
       'Content-Type': 'application/json'
     },
-    // credentials: 'include',
   }
   const body = JSON.stringify()
 
   try {
     const response = await axios.post('api/webauth/register', body, config)
     return response.data;
-
   } catch (error) {
-    alert(error)
-    throw Error("Server error")
+    throw error;
   }
 }
 
@@ -57,16 +42,13 @@ let sendWebAuthnResponse = async (payload, type) => {
     headers: {
       'Content-Type': 'application/json'
     },
-    // credentials: 'include',
   }
   const body = JSON.stringify(payload);
   try {
     const response = await axios.post(api, body, config);
-
-    return response;
+    return response.data;
   } catch (error) {
-    alert(error)
-    throw Error("Server error")
+    throw error;
   }
 }
 
@@ -78,16 +60,11 @@ let getGetAssertionChallenge = async (id) => {
   }
   const body = JSON.stringify({ id });
 
-  const response = await axios.post('api/webauth/login', body, config)
-
-  console.log(response)
-  const { data } = response;
-
-  if (data.status !== 'ok') {
-    throw new Error(`Server responed with error. The message is: ${response.message}`);
-  }
-  else {
-    return data;
+  try {
+    const response = await axios.post('api/webauth/login', body, config)
+    return response.data;
+  } catch (error) {
+    return error;
   }
 }
 
@@ -115,11 +92,14 @@ export const webauthRegister = (userId) => async dispatch => {
 
     dispatch({
       type: USER_LOADED,
-      payload: res.data
+      payload: res
     });
     dispatch(loadUser())
   } catch (error) {
-    dispatch(setAlert("Biometric authentication failed", 'danger'))
+    const errors = error.response.data.errors;
+    if (errors) {
+      errors.forEach(error => dispatch(setAlert(error.msg, 'danger')));
+    }
     dispatch({
       type: USER_LOADING,
       payload: { loading: false }
@@ -133,7 +113,7 @@ export const webauthLogin = ({ userId }) => async dispatch => {
     // let publicKey = preformatGetAssertReq(response);
     const { rawId } = JSON.parse(localStorage.getItem('bioauthConfig'));
     const testPubKey = {
-      challenge: Buffer.from(base64url.decode(response.challenge), 'base64'),
+      challenge: base64url.toBuffer(response.challenge),
       allowCredentials: [{
         id: strToBin(rawId),
         type: 'public-key',
@@ -145,19 +125,20 @@ export const webauthLogin = ({ userId }) => async dispatch => {
     }
     const cred = await navigator.credentials.get({ publicKey: testPubKey });
     // const cred = await navigator.credentials.get({ publicKey });
-    // alert(cred)
     let getAssertionResponse = publicKeyCredentialToJSON(cred);
     getAssertionResponse.userId = userId;
     const loginRes = await sendWebAuthnResponse(getAssertionResponse, 'login');
     dispatch({
       type: LOGIN_SUCCESS,
-      payload: loginRes.data
+      payload: loginRes
     });
 
     dispatch(loadUser())
-
   } catch (error) {
-    // alert(error)
+    const errors = error.response.data.errors;
+    if (errors) {
+      errors.forEach(error => dispatch(setAlert(error.msg, 'danger')));
+    }
     dispatch({
       type: AUTH_ERROR
     });

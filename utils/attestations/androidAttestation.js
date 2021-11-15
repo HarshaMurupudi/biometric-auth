@@ -46,8 +46,6 @@ var validateCertificatePath = (certificates) => {
     let issuerCert = new jsrsasign.X509();
     issuerCert.readCertPEM(issuerPem);
 
-    console.log(subjectCert.getIssuerString(), issuerCert.getSubjectString())
-
     if (subjectCert.getIssuerString() !== issuerCert.getSubjectString())
       throw new Error('Failed to validate certificate path! Issuers dont match!');
 

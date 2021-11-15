@@ -41,7 +41,6 @@ let generateServerMakeCredRequest = (username, displayName, id) => {
 }
 
 let verifyAuthenticatorAttestationResponse = (webAuthnResponse) => {
-  console.log(webAuthnResponse, 'webauth');
   const { rawId } = webAuthnResponse;
   let attestationBuffer = base64url.toBuffer(webAuthnResponse.response.attestationObject);
   let attestationStruct = cbor.decodeAllSync(attestationBuffer)[0];
@@ -73,8 +72,6 @@ let verifyAuthenticatorAttestationResponse = (webAuthnResponse) => {
   }
 
   if (response.verified) {
-    console.log(rawId, "rawID")
-    console.log(base64url.encode(rawId), "encoded rawId")
     response.authrInfo = {
       fmt: 'fido-u2f',
       cosePublicKey: base64url.encode(authDataStruct.cosePublicKeyBuffer),

@@ -1,6 +1,10 @@
 const express = require('express');
-const connectDB = require('./config/db');
+var cookieSession = require('cookie-session')
 const path = require('path');
+const crypto = require('crypto');
+const cookieParser = require('cookie-parser');
+
+const connectDB = require('./config/db');
 
 const app = express();
 
@@ -8,6 +12,16 @@ connectDB();
 
 // Middleware
 app.use(express.json({ extended: false }));
+
+/* ----- session ----- */
+app.use(cookieSession({
+  name: 'session',
+  keys: [crypto.randomBytes(32).toString('hex')],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
+app.use(cookieParser());
 
 //  Routes
 app.use('/api/user', require('./routes/api/user'))
