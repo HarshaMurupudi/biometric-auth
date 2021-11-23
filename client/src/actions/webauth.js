@@ -75,9 +75,9 @@ export const webauthRegister = (userId) => async dispatch => {
     // Create a credential
     let publicKey = preformatMakeCredReq(credChallengeRes);
     const cred = await navigator.credentials.create({ publicKey });
-
     const locallyStoredBioauthConfig = {
-      rawId: binToStr(cred.rawId),
+      // rawId: binToStr(cred.rawId),
+      rawId: base64url.encode(cred.rawId),
       userId
     }
     localStorage.setItem('bioauthConfig', JSON.stringify(locallyStoredBioauthConfig));
@@ -88,6 +88,7 @@ export const webauthRegister = (userId) => async dispatch => {
     });
     // Register the credential to the server endpoint
     let makeCredResponse = publicKeyCredentialToJSON(cred);
+    // alert(JSON.stringify(makeCredResponse));
     const res = await sendWebAuthnResponse(makeCredResponse, 'register');
 
     dispatch({
@@ -96,10 +97,16 @@ export const webauthRegister = (userId) => async dispatch => {
     });
     dispatch(loadUser())
   } catch (error) {
-    const errors = error.response.data.errors;
-    if (errors) {
-      errors.forEach(error => dispatch(setAlert(error.msg, 'danger')));
+    if (error.response) {
+      const errors = error.response.data.errors;
+      if (errors) {
+        errors.forEach(error => dispatch(setAlert(error.msg, 'danger')));
+      }
+    } else {
+      console.log(error)
+      dispatch(setAlert('Registration failed', 'danger', 3000));
     }
+
     dispatch({
       type: USER_LOADING,
       payload: { loading: false }
@@ -115,7 +122,9 @@ export const webauthLogin = ({ userId }) => async dispatch => {
     const testPubKey = {
       challenge: base64url.toBuffer(response.challenge),
       allowCredentials: [{
-        id: strToBin(rawId),
+        // id: strToBin(rawId),
+        id: base64url.toBuffer(rawId),
+        // id: Buffer.from(base64url.decode(rawId), 'base64'),
         type: 'public-key',
         // transports: ["internal"]
       }],
@@ -135,9 +144,14 @@ export const webauthLogin = ({ userId }) => async dispatch => {
 
     dispatch(loadUser())
   } catch (error) {
-    const errors = error.response.data.errors;
-    if (errors) {
-      errors.forEach(error => dispatch(setAlert(error.msg, 'danger')));
+    if (error.response) {
+      const errors = error.response.data.errors;
+      if (errors) {
+        errors.forEach(error => dispatch(setAlert(error.msg, 'danger')));
+      }
+    } else {
+      console.log(error)
+      dispatch(setAlert('Registration failed', 'danger', 3000));
     }
     dispatch({
       type: AUTH_ERROR

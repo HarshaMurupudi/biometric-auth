@@ -84,3 +84,33 @@ export var binToStr = (bin) => {
     (s, byte) => s + String.fromCharCode(byte), ''
   ));
 };
+
+export const isWebauthnAvailable = async () => {
+  const webAuthnAvailability = {
+    status: false,
+    message: ''
+  };
+  const { PublicKeyCredential } = window;
+
+
+
+  if (typeof (PublicKeyCredential) == "undefined") {
+    webAuthnAvailability.status = false;
+    webAuthnAvailability.message = 'No support';
+
+    return webAuthnAvailability;
+  }
+
+  const isUserVerifyingPlatformAuthnAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+
+  if (!isUserVerifyingPlatformAuthnAvailable) {
+    webAuthnAvailability.status = false;
+    webAuthnAvailability.message = "In-built biometric authenticator isn't available";
+
+    return webAuthnAvailability;
+  }
+
+  webAuthnAvailability.status = true;
+  return webAuthnAvailability;
+
+}

@@ -31,7 +31,7 @@ let generateServerGetAssertion = (authenticators) => {
 }
 
 let verifyAuthenticatorAssertionResponse = (webAuthnResponse, authenticators) => {
-  let authr = findAuthr(webAuthnResponse.id, authenticators);
+  let authr = findAuthr(webAuthnResponse.rawId, authenticators);
   let pubKeyBuffer = base64url.toBuffer(authr.cosePublicKey);
   let clientDataHash = hash(base64url.toBuffer(webAuthnResponse.response.clientDataJSON))
   let authDataBuffer = base64url.toBuffer(webAuthnResponse.response.authenticatorData);

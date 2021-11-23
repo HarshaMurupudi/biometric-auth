@@ -31,6 +31,9 @@ let generateServerMakeCredRequest = (username, displayName, id) => {
       name: username,
       displayName: displayName
     },
+    authenticatorSelection: {
+      authenticatorAttachment: "platform",
+    },
     attestation: 'direct',
     pubKeyCredParams: [
       {
@@ -76,7 +79,10 @@ let verifyAuthenticatorAttestationResponse = (webAuthnResponse) => {
       fmt: 'fido-u2f',
       cosePublicKey: base64url.encode(authDataStruct.cosePublicKeyBuffer),
       counter: authDataStruct.counter,
-      credId: base64url.encode(rawId)
+      // credId: base64url.encode(rawId),
+      credId: rawId,
+      // credId: rawId,
+      // rawId: 
     }
   }
 

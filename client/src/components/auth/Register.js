@@ -1,5 +1,4 @@
 import React, { Fragment, useState } from 'react'
-import axios from 'axios';
 import { Link, Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { setAlert } from '../../actions/alert';
@@ -19,7 +18,6 @@ const Register = ({ setAlert, register, isAuthenticated }) => {
   const onSubmit = async e => {
     e.preventDefault();
     if (password !== password2) {
-      console.log('Password donot match');
       setAlert('Password donot match', 'danger', 3000);
 
     } else {

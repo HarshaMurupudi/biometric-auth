@@ -152,8 +152,8 @@ const parseAuthData = (buffer) => {
  */
 let findAuthr = (credId, authenticators) => {
   for (let authr of authenticators) {
-    console.log(base64url.decode(authr.credId), credId)
-    if (base64url.decode(authr.credId) === credId)
+    // if (base64url.decode(authr.credId) === credId)
+    if (authr.credId === credId)
       return authr
     // if (base64url.decode(authr.credId) === credId)
     //   return authr
