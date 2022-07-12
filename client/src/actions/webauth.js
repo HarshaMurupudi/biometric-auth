@@ -6,43 +6,41 @@ import {
   publicKeyCredentialToJSON,
   preformatGetAssertReq,
   strToBin,
-  binToStr
+  binToStr,
 } from '../utils/webauth';
 
-import {
-  USER_LOADED,
-  USER_LOADING,
-  LOGIN_SUCCESS,
-  AUTH_ERROR
-} from './types';
+import { USER_LOADED, USER_LOADING, LOGIN_SUCCESS, AUTH_ERROR } from './types';
 
 import { loadUser } from './auth';
-import { setAlert } from './alert'
+import { setAlert } from './alert';
 
 let getMakeCredentialsChallenge = async () => {
   const config = {
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     },
-  }
-  const body = JSON.stringify()
+  };
+  const body = JSON.stringify();
 
   try {
-    const response = await axios.post('api/webauth/register', body, config)
+    const response = await axios.post('api/webauth/register', body, config);
     return response.data;
   } catch (error) {
     throw error;
   }
-}
+};
 
 let sendWebAuthnResponse = async (payload, type) => {
-  const api = type === 'register' ? 'api/webauth/register/response' : 'api/webauth/login/response'
+  const api =
+    type === 'register'
+      ? 'api/webauth/register/response'
+      : 'api/webauth/login/response';
 
   const config = {
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     },
-  }
+  };
   const body = JSON.stringify(payload);
   try {
     const response = await axios.post(api, body, config);
@@ -50,25 +48,25 @@ let sendWebAuthnResponse = async (payload, type) => {
   } catch (error) {
     throw error;
   }
-}
+};
 
 let getGetAssertionChallenge = async (id) => {
   const config = {
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     },
-  }
+  };
   const body = JSON.stringify({ id });
 
   try {
-    const response = await axios.post('api/webauth/login', body, config)
+    const response = await axios.post('api/webauth/login', body, config);
     return response.data;
   } catch (error) {
     return error;
   }
-}
+};
 
-export const webauthRegister = (userId) => async dispatch => {
+export const webauthRegister = (userId) => async (dispatch) => {
   try {
     // Obtain the challenge and other options from server endpoint
     const credChallengeRes = await getMakeCredentialsChallenge();
@@ -78,13 +76,16 @@ export const webauthRegister = (userId) => async dispatch => {
     const locallyStoredBioauthConfig = {
       // rawId: binToStr(cred.rawId),
       rawId: base64url.encode(cred.rawId),
-      userId
-    }
-    localStorage.setItem('bioauthConfig', JSON.stringify(locallyStoredBioauthConfig));
+      userId,
+    };
+    localStorage.setItem(
+      'bioauthConfig',
+      JSON.stringify(locallyStoredBioauthConfig)
+    );
 
     dispatch({
       type: USER_LOADING,
-      payload: { loading: true }
+      payload: { loading: true },
     });
     // Register the credential to the server endpoint
     let makeCredResponse = publicKeyCredentialToJSON(cred);
@@ -93,68 +94,75 @@ export const webauthRegister = (userId) => async dispatch => {
 
     dispatch({
       type: USER_LOADED,
-      payload: res
+      payload: res,
     });
-    dispatch(loadUser())
+    dispatch(loadUser());
   } catch (error) {
     if (error.response) {
       const errors = error.response.data.errors;
       if (errors) {
-        errors.forEach(error => dispatch(setAlert(error.msg, 'danger')));
+        errors.forEach((error) => dispatch(setAlert(error.msg, 'danger')));
       }
     } else {
-      console.log(error)
+      console.log(error);
       dispatch(setAlert('Registration failed', 'danger', 3000));
     }
 
     dispatch({
       type: USER_LOADING,
-      payload: { loading: false }
+      payload: { loading: false },
     });
   }
-}
+};
 
-export const webauthLogin = ({ userId }) => async dispatch => {
-  try {
-    const response = await getGetAssertionChallenge(userId);
-    // let publicKey = preformatGetAssertReq(response);
-    const { rawId } = JSON.parse(localStorage.getItem('bioauthConfig'));
-    const testPubKey = {
-      challenge: base64url.toBuffer(response.challenge),
-      allowCredentials: [{
-        // id: strToBin(rawId),
-        id: base64url.toBuffer(rawId),
-        // id: Buffer.from(base64url.decode(rawId), 'base64'),
-        type: 'public-key',
-        // transports: ["internal"]
-      }],
-      authenticatorSelection: {
-        userVerification: "platform"
-      },
-    }
-    const cred = await navigator.credentials.get({ publicKey: testPubKey });
-    // const cred = await navigator.credentials.get({ publicKey });
-    let getAssertionResponse = publicKeyCredentialToJSON(cred);
-    getAssertionResponse.userId = userId;
-    const loginRes = await sendWebAuthnResponse(getAssertionResponse, 'login');
-    dispatch({
-      type: LOGIN_SUCCESS,
-      payload: loginRes
-    });
+export const webauthLogin =
+  ({ userId }) =>
+  async (dispatch) => {
+    try {
+      const response = await getGetAssertionChallenge(userId);
+      // let publicKey = preformatGetAssertReq(response);
+      const { rawId } = JSON.parse(localStorage.getItem('bioauthConfig'));
+      const testPubKey = {
+        challenge: base64url.toBuffer(response.challenge),
+        allowCredentials: [
+          {
+            // id: strToBin(rawId),
+            id: base64url.toBuffer(rawId),
+            // id: Buffer.from(base64url.decode(rawId), 'base64'),
+            type: 'public-key',
+            // transports: ["internal"]
+          },
+        ],
+        authenticatorSelection: {
+          userVerification: 'platform',
+        },
+      };
+      const cred = await navigator.credentials.get({ publicKey: testPubKey });
+      // const cred = await navigator.credentials.get({ publicKey });
+      let getAssertionResponse = publicKeyCredentialToJSON(cred);
+      getAssertionResponse.userId = userId;
+      const loginRes = await sendWebAuthnResponse(
+        getAssertionResponse,
+        'login'
+      );
+      dispatch({
+        type: LOGIN_SUCCESS,
+        payload: loginRes,
+      });
 
-    dispatch(loadUser())
-  } catch (error) {
-    if (error.response) {
-      const errors = error.response.data.errors;
-      if (errors) {
-        errors.forEach(error => dispatch(setAlert(error.msg, 'danger')));
+      dispatch(loadUser());
+    } catch (error) {
+      if (error.response) {
+        const errors = error.response.data.errors;
+        if (errors) {
+          errors.forEach((error) => dispatch(setAlert(error.msg, 'danger')));
+        }
+      } else {
+        console.log(error);
+        dispatch(setAlert('Registration failed', 'danger', 3000));
       }
-    } else {
-      console.log(error)
-      dispatch(setAlert('Registration failed', 'danger', 3000));
+      dispatch({
+        type: AUTH_ERROR,
+      });
     }
-    dispatch({
-      type: AUTH_ERROR
-    });
-  }
-}
+  };

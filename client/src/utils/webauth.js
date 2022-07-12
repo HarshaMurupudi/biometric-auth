@@ -1,3 +1,4 @@
+import { isMobile } from './support';
 const base64url = require('base64url');
 
 /**
@@ -8,28 +9,27 @@ const base64url = require('base64url');
 export var publicKeyCredentialToJSON = (pubKeyCred) => {
   if (pubKeyCred instanceof Array) {
     let arr = [];
-    for (let i of pubKeyCred)
-      arr.push(publicKeyCredentialToJSON(i));
+    for (let i of pubKeyCred) arr.push(publicKeyCredentialToJSON(i));
 
-    return arr
+    return arr;
   }
 
   if (pubKeyCred instanceof ArrayBuffer) {
-    return base64url.encode(pubKeyCred)
+    return base64url.encode(pubKeyCred);
   }
 
   if (pubKeyCred instanceof Object) {
     let obj = {};
 
     for (let key in pubKeyCred) {
-      obj[key] = publicKeyCredentialToJSON(pubKeyCred[key])
+      obj[key] = publicKeyCredentialToJSON(pubKeyCred[key]);
     }
 
-    return obj
+    return obj;
   }
 
-  return pubKeyCred
-}
+  return pubKeyCred;
+};
 
 /**
  * Generate secure random buffer
@@ -42,8 +42,8 @@ export var generateRandomBuffer = (len) => {
   let randomBuffer = new Uint8Array(len);
   window.crypto.getRandomValues(randomBuffer);
 
-  return randomBuffer
-}
+  return randomBuffer;
+};
 
 /**
  * Decodes arrayBuffer required fields.
@@ -52,14 +52,17 @@ export var preformatMakeCredReq = (makeCredReq) => {
   makeCredReq.challenge = base64url.toBuffer(makeCredReq.challenge);
   makeCredReq.user.id = Buffer.from(base64url.decode(makeCredReq.user.id));
 
-  return makeCredReq
-}
+  return makeCredReq;
+};
 
 /**
  * Decodes arrayBuffer required fields.
  */
 export var preformatGetAssertReq = (getAssert) => {
-  getAssert.challenge = Buffer.from(base64url.decode(getAssert.challenge), 'base64');
+  getAssert.challenge = Buffer.from(
+    base64url.decode(getAssert.challenge),
+    'base64'
+  );
   const rawId = localStorage.getItem('rawId');
 
   for (let allowCred of getAssert.allowCredentials) {
@@ -68,49 +71,56 @@ export var preformatGetAssertReq = (getAssert) => {
     allowCred.id = strToBin(rawId);
   }
 
-  return getAssert
-}
+  return getAssert;
+};
 
 // another function to go from string to ByteArray, but we first encode the
 // string as base64 - note the use of the atob() function
 export var strToBin = (str) => {
-  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
-}
+  return Uint8Array.from(atob(str), (c) => c.charCodeAt(0));
+};
 
 // function to encode raw binary to string, which is subsequently
 // encoded to base64 - note the use of the btoa() function
 export var binToStr = (bin) => {
-  return btoa(new Uint8Array(bin).reduce(
-    (s, byte) => s + String.fromCharCode(byte), ''
-  ));
+  return btoa(
+    new Uint8Array(bin).reduce((s, byte) => s + String.fromCharCode(byte), '')
+  );
 };
 
 export const isWebauthnAvailable = async () => {
   const webAuthnAvailability = {
     status: false,
-    message: ''
+    message: '',
   };
   const { PublicKeyCredential } = window;
 
-
-
-  if (typeof (PublicKeyCredential) == "undefined") {
+  if (typeof PublicKeyCredential == 'undefined') {
     webAuthnAvailability.status = false;
     webAuthnAvailability.message = 'No support';
 
     return webAuthnAvailability;
   }
 
-  const isUserVerifyingPlatformAuthnAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+  const isUserVerifyingPlatformAuthnAvailable =
+    await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
 
   if (!isUserVerifyingPlatformAuthnAvailable) {
     webAuthnAvailability.status = false;
-    webAuthnAvailability.message = "In-built biometric authenticator isn't available";
+    webAuthnAvailability.message =
+      "In-built biometric authenticator isn't available";
+
+    return webAuthnAvailability;
+  }
+
+  if (!isMobile()) {
+    webAuthnAvailability.status = false;
+    webAuthnAvailability.message =
+      'Disabled on desktop. Please use a mobile device.';
 
     return webAuthnAvailability;
   }
 
   webAuthnAvailability.status = true;
   return webAuthnAvailability;
-
-}
+};
